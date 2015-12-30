@@ -10,7 +10,7 @@ import org.springframework.stereotype.Controller;
  * Created by michal on 29.12.15.
  */
 @Controller
-public class MyController {
+public class SequentialInOutTopicController {
 
     @MessageMapping("/hello")
     @SendTo("/topic/greetings")

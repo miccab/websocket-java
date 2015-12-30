@@ -23,6 +23,12 @@
                 stompClient.subscribe('/topic/greetings', function(greeting){
                     showGreeting(JSON.parse(greeting.body).content);
                 });
+                stompClient.subscribe('/topic/captured', function(captured){
+                    showGreeting(JSON.parse(captured.body).content);
+                });
+                stompClient.subscribe('/user/myuser/executed', function(exec){
+                    showGreeting(JSON.parse(exec.body).content);
+                });
             });
         }
 
@@ -37,6 +43,8 @@
         function sendName() {
             var name = document.getElementById('name').value;
             stompClient.send("/app/hello", {}, JSON.stringify({ 'name': name }));
+            stompClient.send("/app/capture", {}, JSON.stringify({ 'name': name }));
+            stompClient.send("/app/exec", {}, JSON.stringify({ 'name': name }));
         }
 
         function showGreeting(message) {
