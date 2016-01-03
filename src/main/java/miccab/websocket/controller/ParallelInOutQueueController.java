@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.security.Principal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by michal on 30.12.15.
@@ -18,11 +20,15 @@ import java.util.List;
 @Controller
 public class ParallelInOutQueueController {
 
-    private final List<String> names = Collections.synchronizedList(new LinkedList<>());
+    private final Map<String, String> userToLastRequestedName = new ConcurrentHashMap<>();
 
     @MessageMapping("/exec")
-    public void capture(MyRequest request) {
-        names.add(request.getName());
+    public void capture(MyRequest request, Principal principal) {
+        userToLastRequestedName.put(getUserName(principal), request.getName());
+    }
+
+    private String getUserName(Principal principal) {
+        return ((UserDetails)(((Authentication) principal).getPrincipal())).getUsername();
     }
 
     @Autowired
@@ -31,7 +37,9 @@ public class ParallelInOutQueueController {
 
     @Scheduled(fixedDelay = 8_000)
     public void broadcast() {
-        messagingTemplate.convertAndSendToUser("myuser", "/executed", new MyResponse(String.valueOf(names.size())));
+        for (String userName : userToLastRequestedName.keySet()) {
+            messagingTemplate.convertAndSendToUser(userName, "/executed", new MyResponse(String.valueOf("#latest: " + userToLastRequestedName.get(userName))));
+        }
     }
 
 }

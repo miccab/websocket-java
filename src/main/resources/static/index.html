@@ -18,6 +18,7 @@
             var socket = new SockJS('/hello');
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function(frame) {
+                var username = frame.headers['user-name']
                 setConnected(true);
                 console.log('Connected: ' + frame);
                 stompClient.subscribe('/topic/greetings', function(greeting){
@@ -26,7 +27,7 @@
                 stompClient.subscribe('/topic/captured', function(captured){
                     showGreeting(JSON.parse(captured.body).content);
                 });
-                stompClient.subscribe('/user/myuser/executed', function(exec){
+                stompClient.subscribe('/user/' + username + '/executed', function(exec){
                     showGreeting(JSON.parse(exec.body).content);
                 });
             });
